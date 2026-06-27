@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CORE TEST — Система заданий Pro</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%); color: #e5e5e5; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; }
+
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 65, 0.3); } 50% { box-shadow: 0 0 40px rgba(0, 255, 65, 0.6); } }
+  @keyframes toastIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
+  @keyframes confetti { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+  /* ===== TOAST ===== */
+  .toast-container {
+    position: fixed; top: 20px; right: 20px; z-index: 200;
+    display: flex; flex-direction: column; gap: 10px;
+    pointer-events: none; max-width: 90vw;
+  }
+  .toast {
+    background: rgba(26, 26, 26, 0.98); padding: 16px 20px;
+    border-radius: 12px; border-left: 4px solid #00ff41;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    animation: toastIn 0.4s ease; min-width: 280px; max-width: 380px;
+    display: flex; align-items: center; gap: 12px;
+    backdrop-filter: blur(10px); pointer-events: auto;
+  }
+  .toast.success { border-left-color: #10b981; }
+  .toast.error { border-left-color: #ef4444; }
+  .toast.warning { border-left-color: #f59e0b; }
+  .toast.info { border-left-color: #3b82f6; }
+  .toast.hiding { animation: toastOut 0.4s ease forwards; }
+  .toast-icon { font-size: 24px; }
+  .toast-text { color: #e5e5e5; font-size: 14px; flex: 1; }
+
+  /* ===== КОНФЕТТИ ===== */
+  .confetti {
+    position: fixed; top: -10px; width: 10px; height: 10px;
+    z-index: 150; pointer-events: none;
+    animation: confetti 3s ease-out forwards;
+  }
+
+  /* ===== ЭКРАН ВХОДА ===== */
+  .login-screen {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; min-height: 100dvh; padding: 16px;
+  }
+  .login-box {
+    background: rgba(26, 26, 26, 0.95); padding: 40px 32px; border-radius: 20px;
+    box-shadow: 0 8px 60px rgba(0, 255, 65, 0.3); width: 100%; max-width: 400px;
+    border: 2px solid #00ff41; position: relative;
+    backdrop-filter: blur(10px); animation: fadeInUp 0.6s ease;
+  }
+  .login-box h1 { 
+    text-align: center; margin-bottom: 8px; color: #00ff41; font-weight: 700;
+    font-family: 'Courier New', monospace; font-size: 36px; letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.6);
+    animation: glow 2s ease-in-out infinite;
+  }
+  .login-box .sub { text-align: center; color: #a3a3a3; margin-bottom: 30px; font-size: 14px; }
+  .login-box input {
+    width: 100%; padding: 14px 18px; margin-bottom: 15px;
+    background: rgba(10, 10, 10, 0.8); border: 2px solid #333; border-radius: 10px;
+    color: #00ff41; font-size: 16px; font-family: 'Courier New', monospace;
+    transition: all 0.3s;
+  }
+  .login-box input:focus { 
+    outline: none; border-color: #00ff41; 
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+    transform: translateY(-2px);
+  }
+  .login-box button {
+    width: 100%; padding: 15px; background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+    color: #0a0a0a; border: none; border-radius: 10px; font-size: 17px; cursor: pointer;
+    font-weight: 700; transition: all 0.3s; text-transform: uppercase;
+    box-shadow: 0 4px 20px rgba(0, 255, 65, 0.4);
+  }
+  .login-box button:hover { transform: translateY(-3px); box-shadow: 0 6px 30px rgba(0, 255, 65, 0.6); }
+  .login-box button:active { transform: translateY(0); }
+  .error { color: #ff4444; text-align: center; margin-top: 15px; font-size: 14px; min-height: 20px; }
+  .hint {
+    margin-top: 20px; padding: 15px; background: rgba(10, 10, 10, 0.8);
+    border-radius: 10px; font-size: 12px; color: #a3a3a3; line-height: 1.8;
+    border: 1px solid #333;
+  }
+  .hint code { color: #00ff41; background: rgba(0, 255, 65, 0.1); padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+
+  .login-lang-toggle {
+    position: fixed; top: 20px; right: 20px; z-index: 50;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff; border: none; padding: 10px 16px; border-radius: 10px;
+    cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.3s;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.5);
+  }
+  .login-lang-toggle:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(59, 130, 246, 0.7); }
+
+  /* ===== ГЛАВНЫЙ ЭКРАН ===== */
+  .app { display: none; }
+  .app.active { display: block; animation: fadeInUp 0.5s ease; }
+  header {
+    background: rgba(26, 26, 26, 0.95); padding: 20px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 30px rgba(0, 255, 65, 0.2);
+    border-bottom: 3px solid #00ff41;
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 40;
+  }
+  header h2 { 
+    color: #00ff41; font-weight: 700; font-family: 'Courier New', monospace;
+    font-size: 28px; letter-spacing: 3px;
+    text-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+  }
+  .header-controls { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+  .user-info { display: flex; align-items: center; gap: 12px; }
+  .user-info span { color: #a3a3a3; font-weight: 600; }
+  
+  .lang-toggle, .export-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff; border: none; padding: 10px 18px; border-radius: 10px;
+    cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.3s;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  }
+  .lang-toggle:hover, .export-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(59, 130, 246, 0.6); }
+  .export-btn { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
+  .export-btn:hover { box-shadow: 0 6px 25px rgba(139, 92, 246, 0.6); }
+  
+  .btn-logout {
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+    color: #fff; border: none; padding: 10px 18px; border-radius: 10px;
+    cursor: pointer; font-weight: 600; transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+  }
+  .btn-logout:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(255, 68, 68, 0.6); }
+
+  main { padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* ===== ПРОГРЕСС-БАР ===== */
+  .progress-section {
+    background: rgba(26, 26, 26, 0.9); padding: 20px 24px; border-radius: 16px;
+    margin-bottom: 24px; border: 2px solid #10b981;
+  }
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .progress-title { color: #10b981; font-weight: 700; font-size: 16px; }
+  .progress-percent { color: #fff; font-weight: 700; font-size: 20px; }
+  .progress-bar {
+    width: 100%; height: 12px; background: rgba(10, 10, 10, 0.8);
+    border-radius: 6px; overflow: hidden; position: relative;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, #10b981 0%, #00ff41 100%);
+    border-radius: 6px; transition: width 0.6s ease;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+
+  /* ===== ДАШБОРД ===== */
+  .dashboard {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: rgba(26, 26, 26, 0.9); padding: 20px; border-radius: 16px;
+    border: 2px solid transparent; transition: all 0.3s;
+    position: relative; overflow: hidden;
+    animation: slideIn 0.5s ease backwards;
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.1s; border-color: #00ff41; }
+  .stat-card:nth-child(2) { animation-delay: 0.2s; border-color: #3b82f6; }
+  .stat-card:nth-child(3) { animation-delay: 0.3s; border-color: #f59e0b; }
+  .stat-card:nth-child(4) { animation-delay: 0.4s; border-color: #8b5cf6; }
+  .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(0, 255, 65, 0.3); }
+  .stat-card .stat-icon { font-size: 28px; margin-bottom: 8px; }
+  .stat-card .stat-value { font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .stat-card .stat-label { font-size: 12px; color: #a3a3a3; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ===== ПОИСК И СОРТИРОВКА ===== */
+  .search-sort-bar {
+    display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .search-bar { flex: 1; min-width: 250px; position: relative; }
+  .search-bar input {
+    width: 100%; padding: 14px 20px 14px 50px;
+    background: rgba(26, 26, 26, 0.9); border: 2px solid #333; border-radius: 12px;
+    color: #e5e5e5; font-size: 16px; transition: all 0.3s;
+  }
+  .search-bar input:focus {
+    outline: none; border-color: #00ff41;
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+  }
+  .search-bar::before {
+    content: '🔍'; position: absolute; left: 18px; top: 50%;
+    transform: translateY(-50%); font-size: 20px;
+  }
+  .sort-select {
+    padding: 14px 18px; background: rgba(26, 26, 26, 0.9);
+    border: 2px solid #333; border-radius: 12px; color: #e5e5e5;
+    font-size: 14px; cursor: pointer; min-width: 200px;
+    transition: all 0.3s;
+  }
+  .sort-select:focus { outline: none; border-color: #00ff41; }
+
+  /* ===== АДМИН-ПАНЕЛЬ ===== */
+  .admin-panel {
+    background: rgba(26, 26, 26, 0.9); padding: 28px; border-radius: 16px;
+    margin-bottom: 32px; border: 2px solid #f59e0b;
+    box-shadow: 0 4px 30px rgba(245, 158, 11, 0.2);
+  }
+  .admin-panel h3 { color: #fbbf24; margin-bottom: 20px; font-size: 20px; }
+  .admin-panel input, .admin-panel textarea, .admin-panel select {
+    width: 100%; padding: 12px 16px; margin-bottom: 14px;
+    background: rgba(10, 10, 10, 0.8); border: 2px solid #333; border-radius: 8px;
+    color: #e5e5e5; font-size: 15px; font-family: inherit; transition: all 0.3s;
+  }
+  .admin-panel input:focus, .admin-panel textarea:focus, .admin-panel select:focus {
+    outline: none; border-color: #00ff41;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+  }
+  .admin-panel textarea { min-height: 120px; resize: vertical; }
+  .admin-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .btn-publish {
+    background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+    color: #0a0a0a; border: none; padding: 14px 28px; border-radius: 10px;
+    cursor: pointer; font-weight: 700; font-size: 16px; text-transform: uppercase;
+    width: 100%; transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(0, 255, 65, 0.4);
+  }
+  .btn-publish:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(0, 255, 65, 0.6); }
+
+  input[type="date"] {
+    background: #ffffff !important; color: #0a0a0a !important;
+    border: 2px solid #00ff41 !important; font-weight: 600; color-scheme: light;
+  }
+  input[type="date"]:focus { box-shadow: 0 0 15px rgba(0, 255, 65, 0.6) !important; }
+
+  /* ===== ДОСКА ===== */
+  .board-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .board-header h3 { font-size: 24px; color: #00ff41; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; }
+  .filter-btn {
+    background: rgba(26, 26, 26, 0.9); color: #e5e5e5; border: 2px solid #333;
+    padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    transition: all 0.3s; font-weight: 600;
+  }
+  .filter-btn:hover { border-color: #00ff41; transform: translateY(-2px); }
+  .filter-btn.active { 
+    background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+    color: #0a0a0a; border-color: #00ff41;
+    box-shadow: 0 4px 15px rgba(0, 255, 65, 0.4);
+  }
+
+  .board {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+  .task-card {
+    background: rgba(26, 26, 26, 0.9); border-radius: 16px; padding: 24px;
+    cursor: pointer; transition: all 0.3s; border-left: 6px solid #333;
+    position: relative; animation: fadeInUp 0.5s ease backwards;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  .task-card:hover { transform: translateY(-6px); box-shadow: 0 8px 40px rgba(0, 255, 65, 0.2); }
+  .task-card.pinned { border-left-color: #fbbf24; }
+  .task-card.important { border-left-color: #ef4444; background: rgba(42, 26, 26, 0.9); }
+  .task-card.standard  { border-left-color: #00ff41; }
+  .task-card.frozen    { border-left-color: #06b6d4; background: rgba(26, 42, 42, 0.9); }
+  .task-card.closed    { opacity: 0.6; border-left-color: #444; }
+  .task-card.completed { border-left-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+
+  .pin-indicator { position: absolute; top: 12px; left: 12px; font-size: 20px; animation: pulse 2s ease-in-out infinite; }
+
+  .task-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 6px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    margin-bottom: 12px; margin-right: 6px;
+  }
+  .badge-important { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; }
+  .badge-standard  { background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%); color: #0a0a0a; }
+  .badge-frozen    { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: #fff; }
+  .badge-closed    { background: #444; color: #d1d5db; }
+  .badge-completed { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; }
+
+  .task-card h4 { margin-bottom: 12px; font-size: 18px; color: #fff; word-break: break-word; font-weight: 600; padding-left: 0; }
+  .task-card.pinned h4 { padding-left: 28px; }
+  .task-card .preview { color: #a3a3a3; font-size: 14px; margin-bottom: 14px; line-height: 1.6; word-break: break-word; }
+  .task-card .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .task-card .tag {
+    background: rgba(59, 130, 246, 0.2); color: #3b82f6;
+    padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  }
+  .task-card .dates {
+    display: flex; justify-content: space-between; font-size: 13px;
+    color: #a3a3a3; padding-top: 12px; border-top: 1px solid #333;
+    gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  .countdown {
+    font-weight: 700; font-size: 12px;
+    padding: 4px 10px; border-radius: 6px;
+  }
+  .countdown.urgent { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+  .countdown.warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+  .countdown.normal { background: rgba(0, 255, 65, 0.2); color: #00ff41; }
+  .countdown.done { background: rgba(100, 100, 100, 0.2); color: #888; }
+
+  .lang-indicator {
+    position: absolute; top: 12px; right: 12px; font-size: 11px;
+    color: #3b82f6; font-weight: 600; background: rgba(59, 130, 246, 0.15);
+    padding: 4px 8px; border-radius: 6px;
+  }
+
+  .delete-btn-card {
+    position: absolute; bottom: 12px; right: 12px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff; border: none; width: 40px; height: 40px; border-radius: 8px;
+    cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s; opacity: 0.8;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+  }
+  .delete-btn-card:hover { opacity: 1; transform: scale(1.1); box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6); }
+
+  /* ===== МОДАЛКА ===== */
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9); justify-content: center; align-items: center;
+    z-index: 100; padding: 20px; backdrop-filter: blur(5px);
+  }
+  .modal-overlay.active { display: flex; animation: fadeInUp 0.3s ease; }
+  .modal {
+    background: rgba(26, 26, 26, 0.98); border-radius: 20px; padding: 36px;
+    max-width: 750px; width: 100%; max-height: 90vh; overflow-y: auto;
+    position: relative; border: 2px solid #00ff41;
+    box-shadow: 0 8px 60px rgba(0, 255, 65, 0.3);
+  }
+  .modal-close {
+    position: absolute; top: 20px; right: 24px; background: none;
+    border: none; color: #a3a3a3; font-size: 32px; cursor: pointer;
+    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s; border-radius: 8px;
+  }
+  .modal-close:hover { color: #00ff41; background: rgba(0, 255, 65, 0.1); }
+  .modal h3 { margin-bottom: 20px; font-size: 26px; padding-right: 50px; color: #00ff41; word-break: break-word; }
+  .modal .meta { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+  .modal .content {
+    background: rgba(10, 10, 10, 0.8); padding: 24px; border-radius: 12px;
+    line-height: 1.8; white-space: pre-wrap; word-wrap: break-word;
+    border: 1px solid #333; color: #e5e5e5; font-size: 15px;
+  }
+  .modal .dates-full {
+    margin-top: 24px; padding-top: 20px; border-top: 2px solid #333;
+    font-size: 15px; color: #a3a3a3; line-height: 2;
+  }
+  .modal .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .modal .tag {
+    background: rgba(59, 130, 246, 0.2); color: #3b82f6;
+    padding: 6px 14px; border-radius: 14px; font-size: 13px; font-weight: 600;
+  }
+
+  .comments-section { margin-top: 24px; padding-top: 20px; border-top: 2px solid #333; }
+  .comments-section h4 { color: #00ff41; margin-bottom: 16px; font-size: 18px; }
+  .comment {
+    background: rgba(10, 10, 10, 0.6); padding: 14px; border-radius: 10px;
+    margin-bottom: 12px; border-left: 3px solid #3b82f6;
+  }
+  .comment .comment-author { font-weight: 700; color: #3b82f6; margin-bottom: 6px; font-size: 13px; }
+  .comment .comment-text { color: #e5e5e5; line-height: 1.6; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+  .comment .comment-date { color: #666; font-size: 11px; margin-top: 6px; }
+  .comment-input {
+    width: 100%; padding: 12px; background: rgba(10, 10, 10, 0.8);
+    border: 2px solid #333; border-radius: 8px; color: #e5e5e5;
+    font-size: 14px; margin-bottom: 10px; resize: vertical; min-height: 80px;
+    font-family: inherit;
+  }
+  .comment-input:focus { outline: none; border-color: #3b82f6; }
+  .btn-add-comment {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff; border: none; padding: 10px 20px; border-radius: 8px;
+    cursor: pointer; font-weight: 600; transition: all 0.3s;
+  }
+  .btn-add-comment:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5); }
+
+  .admin-actions {
+    margin-top: 24px; padding-top: 20px; border-top: 2px solid #333;
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .admin-actions button {
+    padding: 12px 20px; border: none; border-radius: 8px;
+    cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s;
+    flex: 1 1 auto; min-width: 130px;
+  }
+  .btn-freeze   { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: #fff; }
+  .btn-unfreeze { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: #fff; }
+  .btn-close-task { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; }
+  .btn-reopen   { background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%); color: #0a0a0a; }
+  .btn-delete   { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #fff; }
+  .btn-pin      { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #0a0a0a; }
+  .btn-complete { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; }
+  .admin-actions button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+
+  .empty {
+    text-align: center; padding: 80px 20px; color: #666;
+    grid-column: 1 / -1;
+  }
+  .empty h4 { font-size: 24px; margin-bottom: 12px; color: #00ff41; }
+  .empty p { font-size: 16px; }
+
+  /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
+  @media (max-width: 768px) {
+    header { padding: 16px; flex-direction: column; gap: 12px; }
+    header h2 { font-size: 22px; }
+    .header-controls { width: 100%; justify-content: space-between; }
+    .user-info { flex: 1; justify-content: flex-end; }
+    .user-info span { font-size: 13px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    
+    main { padding: 16px; }
+    
+    .dashboard { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .stat-card { padding: 16px; }
+    .stat-card .stat-value { font-size: 26px; }
+    .stat-card .stat-label { font-size: 11px; }
+    
+    .admin-panel { padding: 20px; margin-bottom: 24px; }
+    .admin-panel h3 { font-size: 18px; }
+    .admin-row { grid-template-columns: 1fr; gap: 10px; }
+    
+    .board-header { margin-bottom: 20px; }
+    .board-header h3 { font-size: 20px; width: 100%; }
+    .filters { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+    .filter-btn { flex-shrink: 0; padding: 10px 16px; font-size: 13px; }
+    
+    .board { grid-template-columns: 1fr; gap: 16px; }
+    .task-card { padding: 20px; }
+    .task-card h4 { font-size: 17px; }
+    
+    .search-sort-bar { flex-direction: column; }
+    .sort-select { width: 100%; min-width: 0; }
+    
+    .modal { padding: 24px; max-height: 95vh; margin: 10px; }
+    .modal h3 { font-size: 22px; padding-right: 40px; }
+    .modal-close { top: 16px; right: 16px; font-size: 28px; }
+    .modal .content { padding: 18px; font-size: 14px; }
+    
+    .admin-actions button { padding: 12px 16px; font-size: 13px; min-width: 0; }
+    
+    .login-box { padding: 32px 24px; }
+    .login-box h1 { font-size: 28px; }
+    
+    .toast { min-width: 240px; max-width: calc(100vw - 40px); }
+    .toast-container { right: 10px; left: 10px; }
+  }
+
+  @media (max-width: 400px) {
+    .dashboard { grid-template-columns: 1fr; }
+    .login-box h1 { font-size: 24px; letter-spacing: 2px; }
+    .header-controls { gap: 8px; }
+    .lang-toggle, .export-btn { padding: 8px 12px; font-size: 12px; }
+    .btn-logout { padding: 8px 12px; font-size: 12px; }
+  }
+
+  @media (hover: none) {
+    .task-card:hover { transform: none; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
+  }
+
+  @supports (padding: env(safe-area-inset-top)) {
+    header { padding-top: calc(20px + env(safe-area-inset-top)); }
+    .login-screen { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Toast уведомления -->
+<div class="toast-container" id="toastContainer"></div>
+
+<button class="login-lang-toggle" id="loginLangToggle" onclick="toggleAllTranslation()" style="display:none;">
+  <span class="flag">🇷🇺</span><span id="loginLangText">RU</span>
+</button>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>CORE TEST</h1>
+    <p class="sub" id="loginSub">Система заданий для тестировщиков</p>
+    <input type="text" id="loginUser" placeholder="Логин" autocomplete="off">
+    <input type="password" id="loginPass" placeholder="Пароль">
+    <button onclick="doLogin()" id="loginBtn">Войти</button>
+    <div class="error" id="loginError"></div>
+    <div class="hint" id="loginHint">
+      <b id="hintTitle">Тестовые аккаунты:</b><br>
+      👑 <span id="hintAdminLabel">Админ</span>: <code>admin</code> / <code>admin123</code><br>
+      👤 <span id="hintTesterLabel">Тестер</span>: <code>tester1</code> / <code>test123</code><br>
+      👤 <span id="hintTesterLabel2">Тестер</span>: <code>tester2</code> / <code>test456</code>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <h2>CORE TEST</h2>
+    <div class="header-controls">
+      <button class="lang-toggle" id="langToggle" onclick="toggleAllTranslation()">
+        <span class="flag">🇷🇺</span>
+        <span id="langText">RU</span>
+      </button>
+      <button class="export-btn" id="exportBtn" onclick="exportData()">
+        <span>💾</span>
+        <span id="exportText">Экспорт</span>
+      </button>
+      <div class="user-info">
+        <span id="userLabel"></span>
+        <button class="btn-logout" id="logoutBtn" onclick="doLogout()">Выйти</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="progress-section" id="progressSection">
+      <div class="progress-header">
+        <span class="progress-title" id="progressTitle">📈 Прогресс выполнения</span>
+        <span class="progress-percent" id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="dashboard" id="dashboard"></div>
+
+    <div class="search-sort-bar">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Поиск задач..." oninput="renderBoard()">
+      </div>
+      <select class="sort-select" id="sortSelect" onchange="renderBoard()">
+        <option value="created-desc">🕐 Новые сначала</option>
+        <option value="created-asc">🕐 Старые сначала</option>
+        <option value="priority">🔥 По приоритету</option>
+        <option value="deadline">⏰ По дедлайну</option>
+      </select>
+    </div>
+
+    <div class="admin-panel" id="adminPanel" style="display:none;">
+      <h3 id="adminPanelTitle">⚙️ Панель администратора — создать задание</h3>
+      <input type="text" id="taskTitle" placeholder="Заголовок задания">
+      <textarea id="taskBody" placeholder="Текст задания (скопируйте сюда)..."></textarea>
+      <div class="admin-row">
+        <select id="taskPriority">
+          <option value="standard">📘 Стандарт</option>
+          <option value="important">🔥 Важное</option>
+        </select>
+        <input type="date" id="taskStart">
+        <input type="date" id="taskEnd">
+      </div>
+      <input type="text" id="taskTags" placeholder="Теги (через запятую): баг, фича, тест-кейс">
+      <button class="btn-publish" id="publishBtn" onclick="publishTask()">📢 Опубликовать на доску</button>
+    </div>
+
+    <div class="board-header">
+      <h3 id="boardTitle">📋 Доска заданий</h3>
+      <div class="filters" id="filters">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Все</button>
+        <button class="filter-btn" onclick="setFilter('important', this)">🔥 Важные</button>
+        <button class="filter-btn" onclick="setFilter('active', this)">✅ Активные</button>
+        <button class="filter-btn" onclick="setFilter('frozen', this)">❄️ Замороженные</button>
+        <button class="filter-btn" onclick="setFilter('closed', this)">🔒 Закрытые</button>
+        <button class="filter-btn" onclick="setFilter('completed', this)">✅ Выполненные</button>
+      </div>
+    </div>
+    <div class="board" id="board"></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h3 id="modalTitle"></h3>
+    <div class="meta" id="modalMeta"></div>
+    <div class="content" id="modalContent"></div>
+    <div class="tags" id="modalTags"></div>
+    <div class="dates-full" id="modalDates"></div>
+    <div class="comments-section" id="commentsSection"></div>
+    <div class="admin-actions" id="adminActions" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+// ===== СЛОВАРЬ =====
+const i18n = {
+  ru: {
+    loginSub: 'Система заданий для тестировщиков',
+    loginUser: 'Логин', loginPass: 'Пароль', loginBtn: 'Войти',
+    hintTitle: 'Тестовые аккаунты:', hintAdminLabel: 'Админ', hintTesterLabel: 'Тестер',
+    loginError: '❌ Неверный логин или пароль', logoutBtn: 'Выйти',
+    adminPanelTitle: '⚙️ Панель администратора — создать задание',
+    taskTitlePh: 'Заголовок задания', taskBodyPh: 'Текст задания (скопируйте сюда)...',
+    taskTagsPh: 'Теги (через запятую): баг, фича, тест-кейс',
+    optStandard: '📘 Стандарт', optImportant: '🔥 Важное',
+    publishBtn: '📢 Опубликовать на доску', boardTitle: '📋 Доска заданий',
+    filterAll: 'Все', filterImportant: '🔥 Важные', filterActive: '✅ Активные',
+    filterFrozen: '❄️ Замороженные', filterClosed: '🔒 Закрытые', filterCompleted: '✅ Выполненные',
+    emptyTitle: '📭 Заданий нет', emptyText: 'Пока здесь пусто.',
+    alertFillAll: '⚠️ Заполни все поля!', alertDateWrong: '⚠️ Дата окончания раньше начала!',
+    alertPublished: '✅ Задание опубликовано!',
+    confirmDelete: 'Удалить задачу? Это действие нельзя отменить.',
+    confirmClose: 'Закрыть задачу?',
+    alertTranslateError: '⚠️ Ошибка перевода. Проверьте интернет.',
+    badgeClosed: '🔒 Закрыто', badgeFrozen: '❄️ Заморожено',
+    badgeImportant: '🔥 Важное', badgeStandard: '📘 Стандарт', badgeCompleted: '✅ Выполнено',
+    statusClosed: 'Закрыто', statusFrozen: 'На паузе', statusFuture: 'Ещё не начато', statusActive: 'Активно', statusCompleted: 'Выполнено',
+    modalStatusClosed: '❌ Закрыто', modalStatusFrozen: '❄️ Заморожено (срок на паузе)',
+    modalStatusFuture: '⏳ Ещё не началось', modalStatusActive: '✅ Активно', modalStatusCompleted: '✅ Выполнено',
+    period: 'Период', statusLabel: 'Статус', createdBy: 'Создал',
+    btnUnfreeze: '🔓 Разморозить', btnClose: '🔒 Закрыть', btnReopen: '🔓 Переоткрыть',
+    btnFreeze: '❄️ Заморозить', btnDelete: '🗑️ Удалить', btnPin: '📌 Закрепить', btnUnpin: '📌 Открепить',
+    btnComplete: '✅ Выполнено', titleDelete: 'Удалить',
+    statTotal: 'Всего задач', statActive: 'Активных', statOverdue: 'Просрочено', statCompleted: 'Выполнено',
+    searchPh: '🔍 Поиск задач...', exportText: 'Экспорт',
+    commentsTitle: '💬 Комментарии', commentPh: 'Напишите комментарий...', addComment: 'Добавить',
+    countdownDays: 'дн.', countdownHours: 'ч.', countdownOverdue: 'Просрочено', countdownToday: 'Сегодня',
+    progressTitle: '📈 Прогресс выполнения',
+    sortCreatedDesc: '🕐 Новые сначала', sortCreatedAsc: '🕐 Старые сначала',
+    sortPriority: '🔥 По приоритету', sortDeadline: '⏰ По дедлайну',
+    toastPublished: 'Задание опубликовано!', toastDeleted: 'Задание удалено',
+    toastClosed: 'Задание закрыто', toastReopened: 'Задание переоткрыто',
+    toastFrozen: 'Задание заморожено', toastUnfrozen: 'Задание разморожено',
+    toastPinned: 'Задание закреплено', toastUnpinned: 'Задание откреплено',
+    toastCompleted: '🎉 Задание выполнено!', toastComment: 'Комментарий добавлен',
+    toastExported: 'Данные экспортированы', toastLoginSuccess: 'Добро пожаловать!'
+  },
+  en: {
+    loginSub: 'Task system for testers',
+    loginUser: 'Login', loginPass: 'Password', loginBtn: 'Sign in',
+    hintTitle: 'Test accounts:', hintAdminLabel: 'Admin', hintTesterLabel: 'Tester',
+    loginError: '❌ Invalid login or password', logoutBtn: 'Logout',
+    adminPanelTitle: '⚙️ Administrator panel — create task',
+    taskTitlePh: 'Task title', taskBodyPh: 'Task text (paste here)...',
+    taskTagsPh: 'Tags (comma separated): bug, feature, test-case',
+    optStandard: '📘 Standard', optImportant: '🔥 Important',
+    publishBtn: '📢 Publish to board', boardTitle: '📋 Task board',
+    filterAll: 'All', filterImportant: '🔥 Important', filterActive: '✅ Active',
+    filterFrozen: '❄️ Frozen', filterClosed: '🔒 Closed', filterCompleted: '✅ Completed',
+    emptyTitle: '📭 No tasks', emptyText: 'Board is empty for now.',
+    alertFillAll: '⚠️ Please fill all fields!', alertDateWrong: '⚠️ End date is before start date!',
+    alertPublished: '✅ Task published!',
+    confirmDelete: 'Delete this task? This cannot be undone.',
+    confirmClose: 'Close this task?',
+    alertTranslateError: '⚠️ Translation error. Check your internet.',
+    badgeClosed: '🔒 Closed', badgeFrozen: '❄️ Frozen',
+    badgeImportant: '🔥 Important', badgeStandard: '📘 Standard', badgeCompleted: '✅ Completed',
+    statusClosed: 'Closed', statusFrozen: 'On Hold', statusFuture: 'Not Started', statusActive: 'Active', statusCompleted: 'Completed',
+    modalStatusClosed: '❌ Closed', modalStatusFrozen: '❄️ Frozen (deadline paused)',
+    modalStatusFuture: '⏳ Not started yet', modalStatusActive: '✅ Active', modalStatusCompleted: '✅ Completed',
+    period: 'Period', statusLabel: 'Status', createdBy: 'Created by',
+    btnUnfreeze: '🔓 Unfreeze', btnClose: '🔒 Close', btnReopen: '🔓 Reopen',
+    btnFreeze: '❄️ Freeze', btnDelete: '🗑️ Delete', btnPin: '📌 Pin', btnUnpin: '📌 Unpin',
+    btnComplete: '✅ Complete', titleDelete: 'Delete',
+    statTotal: 'Total Tasks', statActive: 'Active', statOverdue: 'Overdue', statCompleted: 'Completed',
+    searchPh: '🔍 Search tasks...', exportText: 'Export',
+    commentsTitle: '💬 Comments', commentPh: 'Write a comment...', addComment: 'Add',
+    countdownDays: 'd', countdownHours: 'h', countdownOverdue: 'Overdue', countdownToday: 'Today',
+    progressTitle: '📈 Completion progress',
+    sortCreatedDesc: '🕐 Newest first', sortCreatedAsc: '🕐 Oldest first',
+    sortPriority: '🔥 By priority', sortDeadline: '⏰ By deadline',
+    toastPublished: 'Task published!', toastDeleted: 'Task deleted',
+    toastClosed: 'Task closed', toastReopened: 'Task reopened',
+    toastFrozen: 'Task frozen', toastUnfrozen: 'Task unfrozen',
+    toastPinned: 'Task pinned', toastUnpinned: 'Task unpinned',
+    toastCompleted: '🎉 Task completed!', toastComment: 'Comment added',
+    toastExported: 'Data exported', toastLoginSuccess: 'Welcome!'
+  }
+};
+
+function t(key) { return i18n[globalLang][key] || key; }
+
+// ===== TOAST УВЕДОМЛЕНИЯ =====
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><span class="toast-text">${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => toast.remove(), 400);
+  }, duration);
+}
+
+// ===== КОНФЕТТИ =====
+function launchConfetti() {
+  const colors = ['#10b981', '#00ff41', '#3b82f6', '#fbbf24', '#ef4444', '#8b5cf6'];
+  for (let i = 0; i < 50; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + 'vw';
+    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+    confetti.style.width = (6 + Math.random() * 8) + 'px';
+    confetti.style.height = confetti.style.width;
+    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    document.body.appendChild(confetti);
+    setTimeout(() => confetti.remove(), 4000);
+  }
+}
+
+// ===== ПРИМЕНЕНИЕ ЯЗЫКА =====
+function applyLanguage() {
+  document.getElementById('loginSub').textContent = t('loginSub');
+  document.getElementById('loginUser').placeholder = t('loginUser');
+  document.getElementById('loginPass').placeholder = t('loginPass');
+  document.getElementById('loginBtn').textContent = t('loginBtn');
+  document.getElementById('hintTitle').textContent = t('hintTitle');
+  document.getElementById('hintAdminLabel').textContent = t('hintAdminLabel');
+  document.getElementById('hintTesterLabel').textContent = t('hintTesterLabel');
+  document.getElementById('hintTesterLabel2').textContent = t('hintTesterLabel');
+  document.getElementById('logoutBtn').textContent = t('logoutBtn');
+  document.getElementById('exportText').textContent = t('exportText');
+  document.getElementById('adminPanelTitle').textContent = t('adminPanelTitle');
+  document.getElementById('taskTitle').placeholder = t('taskTitlePh');
+  document.getElementById('taskBody').placeholder = t('taskBodyPh');
+  document.getElementById('taskTags').placeholder = t('taskTagsPh');
+  document.getElementById('searchInput').placeholder = t('searchPh');
+  document.getElementById('progressTitle').textContent = t('progressTitle');
+  const opts = document.getElementById('taskPriority').options;
+  opts[0].textContent = t('optStandard');
+  opts[1].textContent = t('optImportant');
+  document.getElementById('publishBtn').textContent = t('publishBtn');
+  document.getElementById('boardTitle').textContent = t('boardTitle');
+  const filterBtns = document.querySelectorAll('#filters .filter-btn');
+  const filterKeys = ['filterAll', 'filterImportant', 'filterActive', 'filterFrozen', 'filterClosed', 'filterCompleted'];
+  filterBtns.forEach((btn, i) => btn.textContent = t(filterKeys[i]));
+  
+  const sortSelect = document.getElementById('sortSelect');
+  sortSelect.options[0].textContent = t('sortCreatedDesc');
+  sortSelect.options[1].textContent = t('sortCreatedAsc');
+  sortSelect.options[2].textContent = t('sortPriority');
+  sortSelect.options[3].textContent = t('sortDeadline');
+}
+
+// ===== БД =====
+const DB = {
+  getUsers() {
+    if (!localStorage.getItem('users')) {
+      localStorage.setItem('users', JSON.stringify({
+        admin:   { pass: 'admin123', role: 'admin',  name: { ru: 'Администратор', en: 'Administrator' } },
+        tester1: { pass: 'test123',  role: 'tester', name: { ru: 'Тестер #1', en: 'Tester #1' } },
+        tester2: { pass: 'test456',  role: 'tester', name: { ru: 'Тестер #2', en: 'Tester #2' } }
+      }));
+    }
+    return JSON.parse(localStorage.getItem('users'));
+  },
+  getTasks() {
+    if (!localStorage.getItem('tasks')) {
+      localStorage.setItem('tasks', JSON.stringify([]));
+    }
+    return JSON.parse(localStorage.getItem('tasks'));
+  },
+  saveTasks(t) { localStorage.setItem('tasks', JSON.stringify(t)); }
+};
+
+let currentUser = null;
+let currentFilter = 'all';
+let currentTaskId = null;
+let globalLang = localStorage.getItem('lang') || 'ru';
+
+// ===== ПЕРЕВОД =====
+async function translateText(text, from = 'ru', to = 'en') {
+  try {
+    const response = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
+    );
+    const data = await response.json();
+    if (data.responseStatus === 200 && data.responseData?.translatedText) {
+      return data.responseData.translatedText;
+    }
+    return text;
+  } catch (error) {
+    console.error('Ошибка перевода:', error);
+    throw error;
+  }
+}
+
+async function toggleAllTranslation() {
+  const loginBtn = document.getElementById('loginLangToggle');
+  const appBtn = document.getElementById('langToggle');
+  
+  if (globalLang === 'en') {
+    globalLang = 'ru';
+    localStorage.setItem('lang', 'ru');
+    loginBtn.innerHTML = '<span class="flag">🇷🇺</span><span id="loginLangText">RU</span>';
+    appBtn.innerHTML = '<span class="flag">🇷🇺</span><span id="langText">RU</span>';
+    applyLanguage();
+    updateUserName();
+    renderDashboard();
+    renderBoard();
+    if (currentTaskId) openTask(currentTaskId);
+    return;
+  }
+
+  loginBtn.classList.add('translating');
+  loginBtn.innerHTML = '<span class="flag">⏳</span><span>Loading...</span>';
+  appBtn.classList.add('translating');
+  appBtn.innerHTML = '<span class="flag">⏳</span><span>Loading...</span>';
+  
+  const tasks = DB.getTasks();
+  let translatedCount = 0;
+
+  try {
+    for (const task of tasks) {
+      if (!task.translatedTitle || !task.translatedBody) {
+        try {
+          const [transTitle, transBody] = await Promise.all([
+            translateText(task.title, 'ru', 'en'),
+            translateText(task.body, 'ru', 'en')
+          ]);
+          task.translatedTitle = transTitle;
+          task.translatedBody = transBody;
+          translatedCount++;
+        } catch (e) {
+          console.error(`Не удалось перевести задачу ${task.id}:`, e);
+        }
+      }
+    }
+
+    DB.saveTasks(tasks);
+    globalLang = 'en';
+    localStorage.setItem('lang', 'en');
+    
+    loginBtn.innerHTML = '<span class="flag">🇬🇧</span><span id="loginLangText">EN</span>';
+    appBtn.innerHTML = '<span class="flag">🇬🇧</span><span id="langText">EN</span>';
+    loginBtn.classList.remove('translating');
+    appBtn.classList.remove('translating');
+    
+    applyLanguage();
+    updateUserName();
+    renderDashboard();
+    renderBoard();
+    if (currentTaskId) openTask(currentTaskId);
+    
+    if (translatedCount > 0) showToast(`Translated ${translatedCount} tasks`, 'success');
+  } catch (e) {
+    console.error('Ошибка при массовом переводе:', e);
+    loginBtn.innerHTML = '<span class="flag">🇷🇺</span><span id="loginLangText">RU</span>';
+    appBtn.innerHTML = '<span class="flag">🇷🇺</span><span id="langText">RU</span>';
+    loginBtn.classList.remove('translating');
+    appBtn.classList.remove('translating');
+    showToast(t('alertTranslateError'), 'error');
+  }
+}
+
+function updateUserName() {
+  if (!currentUser) return;
+  const users = DB.getUsers();
+  const user = users[currentUser.username];
+  const name = typeof user.name === 'object' ? user.name[globalLang] : user.name;
+  document.getElementById('userLabel').textContent =
+    (currentUser.role === 'admin' ? '👑 ' : '👤 ') + name;
+}
+
+function exportData() {
+  const tasks = DB.getTasks();
+  const dataStr = JSON.stringify(tasks, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `core-test-tasks-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(t('toastExported'), 'success');
+}
+
+function deleteTask(id) {
+  if (!confirm(t('confirmDelete'))) return;
+  const tasks = DB.getTasks().filter(x => x.id !== id);
+  DB.saveTasks(tasks);
+  closeModal();
+  showToast(t('toastDeleted'), 'info');
+  renderDashboard();
+  renderBoard();
+}
+
+// ===== АВТОРИЗАЦИЯ =====
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+  const users = DB.getUsers();
+
+  if (!users[u] || users[u].pass !== p) {
+    err.textContent = t('loginError');
+    return;
+  }
+  currentUser = { username: u, ...users[u] };
+  sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+  err.textContent = '';
+  showToast(t('toastLoginSuccess') + ', ' + (typeof users[u].name === 'object' ? users[u].name[globalLang] : users[u].name) + '!', 'success');
+  showApp();
+}
+
+function doLogout() {
+  sessionStorage.removeItem('currentUser');
+  currentUser = null;
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginLangToggle').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').classList.add('active');
+  document.getElementById('loginLangToggle').style.display = 'none';
+  updateUserName();
+
+  document.getElementById('adminPanel').style.display =
+    currentUser.role === 'admin' ? 'block' : 'none';
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('taskStart').value = today;
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('taskEnd').value = tomorrow.toISOString().split('T')[0];
+
+  applyLanguage();
+  renderDashboard();
+  renderBoard();
+}
+
+// ===== ПУБЛИКАЦИЯ =====
+function publishTask() {
+  if (currentUser.role !== 'admin') return;
+  const title = document.getElementById('taskTitle').value.trim();
+  const body  = document.getElementById('taskBody').value.trim();
+  const priority = document.getElementById('taskPriority').value;
+  const start = document.getElementById('taskStart').value;
+  const end   = document.getElementById('taskEnd').value;
+  const tagsStr = document.getElementById('taskTags').value.trim();
+  const tags = tagsStr ? tagsStr.split(',').map(x => x.trim()).filter(x => x) : [];
+
+  if (!title || !body || !start || !end) { 
+    showToast(t('alertFillAll'), 'warning'); 
+    return; 
+  }
+  if (end < start) { 
+    showToast(t('alertDateWrong'), 'warning'); 
+    return; 
+  }
+
+  const tasks = DB.getTasks();
+  tasks.push({
+    id: Date.now(), title, body, priority, start, end, tags,
+    author: currentUser.username, created: Date.now(),
+    frozen: false, manuallyClosed: false, pinned: false, completed: false,
+    translatedTitle: '', translatedBody: '', comments: []
+  });
+  DB.saveTasks(tasks);
+
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskBody').value = '';
+  document.getElementById('taskTags').value = '';
+  showToast(t('toastPublished'), 'success');
+  renderDashboard();
+  renderBoard();
+}
+
+// ===== СТАТУС =====
+function getTaskStatus(task) {
+  if (task.completed) return 'completed';
+  if (task.frozen) return 'frozen';
+  if (task.manuallyClosed) return 'closed';
+  const today = new Date().toISOString().split('T')[0];
+  if (today < task.start) return 'future';
+  if (today > task.end)   return 'closed';
+  return 'active';
+}
+
+// ===== ТАЙМЕР =====
+function getCountdown(endDate) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+  const diff = end - now;
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  
+  if (days < 0) return { text: t('countdownOverdue'), class: 'urgent' };
+  if (days === 0) return { text: t('countdownToday'), class: 'warning' };
+  if (days <= 2) return { text: `${days} ${t('countdownDays')}`, class: 'warning' };
+  return { text: `${days} ${t('countdownDays')}`, class: 'normal' };
+}
+
+// ===== ДАШБОРД =====
+function renderDashboard() {
+  const tasks = DB.getTasks();
+  const today = new Date().toISOString().split('T')[0];
+  const total = tasks.length;
+  const active = tasks.filter(x => !x.completed && !x.frozen && !x.manuallyClosed && today >= x.start && today <= x.end).length;
+  const overdue = tasks.filter(x => !x.completed && !x.frozen && !x.manuallyClosed && today > x.end).length;
+  const completed = tasks.filter(x => x.completed).length;
+
+  const dashboard = document.getElementById('dashboard');
+  dashboard.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value">${total}</div>
+      <div class="stat-label">${t('statTotal')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-value">${active}</div>
+      <div class="stat-label">${t('statActive')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏰</div>
+      <div class="stat-value">${overdue}</div>
+      <div class="stat-label">${t('statOverdue')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value">${completed}</div>
+      <div class="stat-label">${t('statCompleted')}</div>
+    </div>
+  `;
+
+  // Прогресс-бар
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+  document.getElementById('progressFill').style.width = percent + '%';
+  document.getElementById('progressPercent').textContent = percent + '%';
+}
+
+// ===== ФИЛЬТРЫ =====
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBoard();
+}
+
+// ===== РЕНДЕР ДОСКИ =====
+function renderBoard() {
+  const board = document.getElementById('board');
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const sort = document.getElementById('sortSelect').value;
+  
+  let tasks = DB.getTasks().map(x => ({ ...x, status: getTaskStatus(x) }));
+
+  // Поиск
+  if (search) {
+    tasks = tasks.filter(x => {
+      const title = (globalLang === 'en' && x.translatedTitle) ? x.translatedTitle : x.title;
+      const body = (globalLang === 'en' && x.translatedBody) ? x.translatedBody : x.body;
+      return title.toLowerCase().includes(search) || body.toLowerCase().includes(search) || (x.tags && x.tags.some(tag => tag.toLowerCase().includes(search)));
+    });
+  }
+
+  // Фильтры
+  if (currentFilter === 'important') tasks = tasks.filter(x => x.priority === 'important' && x.status !== 'closed');
+  if (currentFilter === 'active')    tasks = tasks.filter(x => x.status === 'active' || x.status === 'future');
+  if (currentFilter === 'frozen')    tasks = tasks.filter(x => x.status === 'frozen');
+  if (currentFilter === 'closed')    tasks = tasks.filter(x => x.status === 'closed');
+  if (currentFilter === 'completed') tasks = tasks.filter(x => x.status === 'completed');
+
+  // Сортировка
+  tasks.sort((a, b) => {
+    // Закреплённые всегда сверху
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    
+    if (sort === 'created-desc') return b.created - a.created;
+    if (sort === 'created-asc') return a.created - b.created;
+    if (sort === 'priority') {
+      const p = { important: 0, standard: 1 };
+      if (p[a.priority] !== p[b.priority]) return p[a.priority] - p[b.priority];
+      return b.created - a.created;
+    }
+    if (sort === 'deadline') return new Date(a.end) - new Date(b.end);
+    return 0;
+  });
+
+  if (tasks.length === 0) {
+    board.innerHTML = `<div class="empty"><h4>${t('emptyTitle')}</h4><p>${t('emptyText')}</p></div>`;
+    return;
+  }
+
+  board.innerHTML = tasks.map(x => {
+    const cardClass = x.status === 'completed' ? 'completed'
+                    : x.status === 'frozen' ? 'frozen'
+                    : x.status === 'closed' ? 'closed'
+                    : x.priority;
+
+    const title = (globalLang === 'en' && x.translatedTitle) ? x.translatedTitle : x.title;
+    const preview = (globalLang === 'en' && x.translatedBody) 
+      ? x.translatedBody.substring(0, 100) + (x.translatedBody.length > 100 ? '...' : '')
+      : x.body.substring(0, 100) + (x.body.length > 100 ? '...' : '');
+
+    let badges = '';
+    if (x.status === 'completed')    badges += `<span class="task-badge badge-completed">${t('badgeCompleted')}</span>`;
+    else if (x.status === 'frozen')  badges += `<span class="task-badge badge-frozen">${t('badgeFrozen')}</span>`;
+    else if (x.status === 'closed')  badges += `<span class="task-badge badge-closed">${t('badgeClosed')}</span>`;
+    else if (x.priority === 'important') badges += `<span class="task-badge badge-important">${t('badgeImportant')}</span>`;
+    else badges += `<span class="task-badge badge-standard">${t('badgeStandard')}</span>`;
+
+    const tagsHtml = (x.tags && x.tags.length > 0) 
+      ? `<div class="tags">${x.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>`
+      : '';
+
+    const countdown = (x.status === 'active' || x.status === 'future') ? getCountdown(x.end) : null;
+    const countdownHtml = countdown ? `<span class="countdown ${countdown.class}">⏱️ ${countdown.text}</span>` : '';
+
+    const langIndicator = globalLang === 'en' && x.translatedTitle 
+      ? '<span class="lang-indicator">🇬🇧 EN</span>' 
+      : '';
+
+    const pinIndicator = x.pinned ? '<span class="pin-indicator">📌</span>' : '';
+
+    const deleteBtn = (currentUser && currentUser.role === 'admin' && (x.status === 'closed' || x.status === 'completed'))
+      ? `<button class="delete-btn-card" onclick="event.stopPropagation(); deleteTask(${x.id})" title="${t('titleDelete')}">🗑️</button>`
+      : '';
+
+    return `
+      <div class="task-card ${cardClass} ${x.pinned ? 'pinned' : ''}" onclick="openTask(${x.id})">
+        ${pinIndicator}
+        ${langIndicator}
+        ${badges}
+        <h4>${escapeHtml(title)}</h4>
+        <div class="preview">${escapeHtml(preview)}</div>
+        ${tagsHtml}
+        <div class="dates">
+          <span>📅 ${x.start} → ${x.end}</span>
+          ${countdownHtml}
+        </div>
+        ${deleteBtn}
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== МОДАЛКА =====
+function openTask(id) {
+  currentTaskId = id;
+  const x = DB.getTasks().find(y => y.id === id);
+  if (!x) return;
+  const status = getTaskStatus(x);
+
+  const title = (globalLang === 'en' && x.translatedTitle) ? x.translatedTitle : x.title;
+  const content = (globalLang === 'en' && x.translatedBody) ? x.translatedBody : x.body;
+
+  document.getElementById('modalTitle').textContent = title;
+
+  let badges = '';
+  if (status === 'completed')    badges += `<span class="task-badge badge-completed">${t('badgeCompleted')}</span>`;
+  else if (status === 'frozen')  badges += `<span class="task-badge badge-frozen">${t('badgeFrozen')}</span>`;
+  else if (status === 'closed')  badges += `<span class="task-badge badge-closed">${t('badgeClosed')}</span>`;
+  else if (x.priority === 'important') badges += `<span class="task-badge badge-important">${t('badgeImportant')}</span>`;
+  else badges += `<span class="task-badge badge-standard">${t('badgeStandard')}</span>`;
+  document.getElementById('modalMeta').innerHTML = badges;
+
+  document.getElementById('modalContent').textContent = content;
+
+  // Теги
+  const tagsHtml = (x.tags && x.tags.length > 0)
+    ? x.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')
+    : '';
+  document.getElementById('modalTags').innerHTML = tagsHtml;
+
+  const statusKey = status === 'completed' ? 'modalStatusCompleted'
+                  : status === 'closed' ? 'modalStatusClosed'
+                  : status === 'frozen' ? 'modalStatusFrozen'
+                  : status === 'future' ? 'modalStatusFuture'
+                  : 'modalStatusActive';
+
+  document.getElementById('modalDates').innerHTML =
+    `<b>${t('period')}:</b> ${x.start} → ${x.end}<br>
+     <b>${t('statusLabel')}:</b> ${t(statusKey)}<br>
+     <b>${t('createdBy')}:</b> ${x.author}`;
+
+  // Комментарии
+  renderComments(x);
+
+  // Действия админа
+  const actions = document.getElementById('adminActions');
+  if (currentUser && currentUser.role === 'admin') {
+    let btns = '';
+    if (status === 'frozen') {
+      btns += `<button class="btn-unfreeze" onclick="toggleFreeze(${x.id})">${t('btnUnfreeze')}</button>`;
+      btns += `<button class="btn-close-task" onclick="manualClose(${x.id})">${t('btnClose')}</button>`;
+      btns += `<button class="btn-pin" onclick="togglePin(${x.id})">${x.pinned ? t('btnUnpin') : t('btnPin')}</button>`;
+    } else if (status === 'closed' || status === 'completed') {
+      btns += `<button class="btn-reopen" onclick="reopenTask(${x.id})">${t('btnReopen')}</button>`;
+      btns += `<button class="btn-freeze" onclick="toggleFreeze(${x.id})">${t('btnFreeze')}</button>`;
+      btns += `<button class="btn-pin" onclick="togglePin(${x.id})">${x.pinned ? t('btnUnpin') : t('btnPin')}</button>`;
+      btns += `<button class="btn-delete" onclick="deleteTask(${x.id})">${t('btnDelete')}</button>`;
+    } else {
+      btns += `<button class="btn-freeze" onclick="toggleFreeze(${x.id})">${t('btnFreeze')}</button>`;
+      btns += `<button class="btn-close-task" onclick="manualClose(${x.id})">${t('btnClose')}</button>`;
+      btns += `<button class="btn-complete" onclick="completeTask(${x.id})">${t('btnComplete')}</button>`;
+      btns += `<button class="btn-pin" onclick="togglePin(${x.id})">${x.pinned ? t('btnUnpin') : t('btnPin')}</button>`;
+    }
+    actions.innerHTML = btns;
+    actions.style.display = 'flex';
+  } else {
+    actions.style.display = 'none';
+  }
+
+  document.getElementById('modal').classList.add('active');
+}
+
+function renderComments(task) {
+  const section = document.getElementById('commentsSection');
+  const comments = task.comments || [];
+  let html = `<h4>${t('commentsTitle')} (${comments.length})</h4>`;
+  
+  if (comments.length > 0) {
+    html += comments.map(c => `
+      <div class="comment">
+        <div class="comment-author">${escapeHtml(c.author)}</div>
+        <div class="comment-text">${escapeHtml(c.text)}</div>
+        <div class="comment-date">${new Date(c.date).toLocaleString()}</div>
+      </div>
+    `).join('');
+  }
+  
+  html += `
+    <textarea class="comment-input" id="commentInput" placeholder="${t('commentPh')}"></textarea>
+    <button class="btn-add-comment" onclick="addComment(${task.id})">${t('addComment')}</button>
+  `;
+  section.innerHTML = html;
+}
+
+function addComment(taskId) {
+  const input = document.getElementById('commentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const tasks = DB.getTasks();
+  const task = tasks.find(x => x.id === taskId);
+  if (!task) return;
+  
+  if (!task.comments) task.comments = [];
+  const users = DB.getUsers();
+  const userName = typeof users[currentUser.username].name === 'object' 
+    ? users[currentUser.username].name[globalLang] 
+    : users[currentUser.username].name;
+  
+  task.comments.push({
+    author: userName,
+    text: text,
+    date: Date.now()
+  });
+  
+  DB.saveTasks(tasks);
+  showToast(t('toastComment'), 'success');
+  renderComments(task);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+  currentTaskId = null;
+}
+
+// ===== ДЕЙСТВИЯ АДМИНА =====
+function toggleFreeze(id) {
+  const tasks = DB.getTasks();
+  const x = tasks.find(y => y.id === id);
+  if (!x) return;
+  x.frozen = !x.frozen;
+  if (x.frozen) { x.manuallyClosed = false; x.completed = false; }
+  DB.saveTasks(tasks);
+  showToast(x.frozen ? t('toastFrozen') : t('toastUnfrozen'), 'info');
+  openTask(id);
+  renderDashboard();
+  renderBoard();
+}
+
+function manualClose(id) {
+  if (!confirm(t('confirmClose'))) return;
+  const tasks = DB.getTasks();
+  const x = tasks.find(y => y.id === id);
+  if (!x) return;
+  x.manuallyClosed = true;
+  x.frozen = false;
+  x.completed = false;
+  DB.saveTasks(tasks);
+  showToast(t('toastClosed'), 'info');
+  openTask(id);
+  renderDashboard();
+  renderBoard();
+}
+
+function reopenTask(id) {
+  const tasks = DB.getTasks();
+  const x = tasks.find(y => y.id === id);
+  if (!x) return;
+  x.manuallyClosed = false;
+  x.frozen = false;
+  x.completed = false;
+  DB.saveTasks(tasks);
+  showToast(t('toastReopened'), 'success');
+  openTask(id);
+  renderDashboard();
+  renderBoard();
+}
+
+function togglePin(id) {
+  const tasks = DB.getTasks();
+  const x = tasks.find(y => y.id === id);
+  if (!x) return;
+  x.pinned = !x.pinned;
+  DB.saveTasks(tasks);
+  showToast(x.pinned ? t('toastPinned') : t('toastUnpinned'), 'info');
+  openTask(id);
+  renderBoard();
+}
+
+function completeTask(id) {
+  const tasks = DB.getTasks();
+  const x = tasks.find(y => y.id === id);
+  if (!x) return;
+  x.completed = true;
+  x.frozen = false;
+  x.manuallyClosed = false;
+  DB.saveTasks(tasks);
+  showToast(t('toastCompleted'), 'success');
+  launchConfetti();
+  openTask(id);
+  renderDashboard();
+  renderBoard();
+}
+
+// ===== УТИЛИТЫ =====
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ===== ГОРЯЧИЕ КЛАВИШИ =====
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('modal').classList.contains('active')) {
+    closeModal();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    if (currentUser) {
+      document.getElementById('searchInput').focus();
+    }
+  }
+});
+
+document.getElementById('loginPass').addEventListener('keypress', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+function initLangButtons() {
+  const loginBtn = document.getElementById('loginLangToggle');
+  const appBtn = document.getElementById('langToggle');
+  if (globalLang === 'en') {
+    loginBtn.innerHTML = '<span class="flag">🇬🇧</span><span id="loginLangText">EN</span>';
+    appBtn.innerHTML = '<span class="flag">🇬🇧</span><span id="langText">EN</span>';
+  } else {
+    loginBtn.innerHTML = '<span class="flag">🇷🇺</span><span id="loginLangText">RU</span>';
+    appBtn.innerHTML = '<span class="flag">🇷🇺</span><span id="langText">RU</span>';
+  }
+}
+
+initLangButtons();
+applyLanguage();
+document.getElementById('loginLangToggle').style.display = 'flex';
+
+const saved = sessionStorage.getItem('currentUser');
+if (saved) { currentUser = JSON.parse(saved); showApp(); }
+
+setInterval(() => { if (currentUser) { renderDashboard(); renderBoard(); } }, 60000);
+</script>
+</body>
+</html>
